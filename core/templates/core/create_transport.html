@@ -1,0 +1,158 @@
+{% extends "base.html" %} {% block content %}
+
+<h4 class="text-success">Create Transport Route</h4>
+<form method="POST">
+  {% csrf_token %}
+  <div id="map" style="height: 400px" class="mb-3"></div>
+
+  <p>
+    <strong>Start Location:</strong>
+    <span id="start-location">Select on map</span>
+  </p>
+  <p>
+    <strong>End Location:</strong> <span id="end-location">Select on map</span>
+  </p>
+
+  <input type="hidden" name="route_start_lat" id="start_lat" />
+  <input type="hidden" name="route_start_lng" id="start_lng" />
+  <input type="hidden" name="route_end_lat" id="end_lat" />
+  <input type="hidden" name="route_end_lng" id="end_lng" />
+  <div class="mb-3">
+    <label for="capacity_total" class="form-label">Total Capacity (kg)</label>
+    <input
+      type="number"
+      class="form-control"
+      id="capacity_total"
+      name="capacity_total"
+      required
+    />
+  </div>
+  <div class="mb-3">
+    <label for="capacity_used" class="form-label"
+      >Already Filled Capacity (kg)</label
+    >
+    <input
+      type="number"
+      class="form-control"
+      id="capacity_used"
+      name="capacity_used"
+      required
+      min="0"
+    />
+  </div>
+
+  <div class="mb-3">
+    <label for="scheduled_date" class="form-label">Scheduled Date</label>
+    <input
+      type="date"
+      class="form-control"
+      id="scheduled_date"
+      name="scheduled_date"
+      required
+    />
+    <script>
+      const today = new Date().toISOString().split("T")[0];
+      document.getElementById("scheduled_date").setAttribute("min", today);
+    </script>
+  </div>
+  <button type="submit" class="btn btn-success">Save Transport</button>
+</form>
+
+<!-- Leaflet + ORS styling/scripts -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+<script>
+  const map = L.map("map").setView([26.85, 80.95], 6);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap contributors",
+  }).addTo(map);
+
+  let startMarker, endMarker, routeLine;
+
+  const updateLocationName = (lat, lng, id) => {
+    fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        document.getElementById(id).textContent =
+          data.display_name || `${lat}, ${lng}`;
+      })
+      .catch((err) => {
+        document.getElementById(id).textContent = "Unknown location";
+      });
+  };
+
+  const drawRoute = (start, end) => {
+    if (routeLine) {
+      map.removeLayer(routeLine);
+    }
+    const apiKey = "YOUR_OPENROUTESERVICE_API_KEY"; // Replace this with your ORS API key
+    axios
+      .post(
+        "https://api.openrouteservice.org/v2/directions/driving-car/geojson",
+        {
+          coordinates: [
+            [start.lng, start.lat],
+            [end.lng, end.lat],
+          ],
+        },
+        {
+          headers: {
+            Authorization: apiKey,
+            "Content-Type": "application/json",
+          },
+        }
+      )
+      .then((response) => {
+        routeLine = L.geoJSON(response.data, {
+          style: { color: "green", weight: 4 },
+        }).addTo(map);
+        map.fitBounds(routeLine.getBounds());
+      })
+      .catch((err) => {
+        console.error("Route error", err);
+      });
+  };
+
+  map.on("click", function (e) {
+    if (!startMarker) {
+      startMarker = L.marker(e.latlng, { draggable: true })
+        .addTo(map)
+        .bindPopup("Start")
+        .openPopup();
+      document.getElementById("start_lat").value = e.latlng.lat;
+      document.getElementById("start_lng").value = e.latlng.lng;
+      updateLocationName(e.latlng.lat, e.latlng.lng, "start-location");
+      startMarker.on("dragend", function (e) {
+        const pos = e.target.getLatLng();
+        document.getElementById("start_lat").value = pos.lat;
+        document.getElementById("start_lng").value = pos.lng;
+        updateLocationName(pos.lat, pos.lng, "start-location");
+        if (startMarker && endMarker) drawRoute(pos, endMarker.getLatLng());
+      });
+    } else if (!endMarker) {
+      endMarker = L.marker(e.latlng, { draggable: true })
+        .addTo(map)
+        .bindPopup("End")
+        .openPopup();
+      document.getElementById("end_lat").value = e.latlng.lat;
+      document.getElementById("end_lng").value = e.latlng.lng;
+      updateLocationName(e.latlng.lat, e.latlng.lng, "end-location");
+      endMarker.on("dragend", function (e) {
+        const pos = e.target.getLatLng();
+        document.getElementById("end_lat").value = pos.lat;
+        document.getElementById("end_lng").value = pos.lng;
+        updateLocationName(pos.lat, pos.lng, "end-location");
+        if (startMarker && endMarker) drawRoute(startMarker.getLatLng(), pos);
+      });
+
+      // Draw route when both points are selected
+      drawRoute(startMarker.getLatLng(), endMarker.getLatLng());
+    }
+  });
+</script>
+
+{% endblock %}

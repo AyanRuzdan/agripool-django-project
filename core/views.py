@@ -1,0 +1,109 @@
+from django.shortcuts import redirect, render, get_object_or_404
+from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
+from .forms import UserRegisterForm, ProduceForm
+from .models import UserProfile, Produce, Transport
+from django.http import HttpResponseForbidden
+# Create your views here.
+
+
+def register(request):
+    if request.method == 'POST':
+        form = UserRegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.set_password(form.cleaned_data['password'])
+            user.save()
+            UserProfile.objects.create(
+                user=user, role=form.cleaned_data['role'])
+            login(request, user)
+            return redirect('dashboard')
+
+    else:
+        form = UserRegisterForm()
+    return render(request, 'core/register.html', {'form': form})
+
+
+@login_required
+def dashboard(request):
+    profile = request.user.userprofile
+
+    # For farmers, get only their own produce
+    produce = Produce.objects.filter(
+        owner=request.user) if profile.role == 'farmer' else None
+
+    # For drivers, get only the transports where they are the driver
+    # This will show all transport routes to both farmers and drivers
+    transport = Transport.objects.all()
+
+    return render(request, 'core/dashboard.html', {
+        'profile': profile,
+        'produce': produce,
+        'transport': transport
+    })
+
+
+@login_required
+def create_produce(request):
+    if request.method == 'POST':
+        form = ProduceForm(request.POST)
+        if form.is_valid():
+            produce = form.save(commit=False)
+            produce.owner = request.user
+            produce.save()
+            return redirect('dashboard')
+    else:
+        form = ProduceForm()
+    return render(request, 'core/create_produce.html', {'form': form})
+
+
+@login_required
+def create_transport(request):
+    if request.method == 'POST':
+        route_start_lat = request.POST['route_start_lat']
+        route_start_lng = request.POST['route_start_lng']
+        route_end_lat = request.POST['route_end_lat']
+        route_end_lng = request.POST['route_end_lng']
+        capacity_total = request.POST['capacity_total']
+        capacity_used = request.POST['capacity_used']
+        scheduled_date = request.POST['scheduled_date']
+        if capacity_used > capacity_total:
+            return render(request, 'core/create_transport.html', {'error': 'Filled capacity cannot exceed total capacity.'})
+        Transport.objects.create(
+            driver=request.user,
+            route_start_lat=route_start_lat,
+            route_start_lng=route_start_lng,
+            route_end_lat=route_end_lat,
+            route_end_lng=route_end_lng,
+            capacity_total=capacity_total,
+            capacity_used=0,
+            scheduled_date=scheduled_date
+        )
+        return redirect('dashboard')
+
+    return render(request, 'core/create_transport.html')
+
+
+@login_required
+def delete_transport(request, transport_id):
+    transport = get_object_or_404(Transport, id=transport_id)
+
+    # Only the driver who created the transport can delete it
+    if transport.driver != request.user:
+        return HttpResponseForbidden("You are not allowed to delete this transport.")
+
+    if request.method == 'POST':
+        transport.delete()
+        # Replace 'dashboard' with your dashboard view name
+        return redirect('dashboard')
+
+    return HttpResponseForbidden("Invalid request method.")
+
+@login_required
+def delete_produce(request, id):
+    produce = get_object_or_404(Produce, id=id, owner=request.user)
+    if request.method == 'POST':
+        produce.delete()
+        return redirect('dashboard')
+    return HttpResponseForbidden()
+

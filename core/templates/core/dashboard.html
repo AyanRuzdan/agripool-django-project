@@ -1,0 +1,64 @@
+{% extends "base.html" %} {% block content %}
+
+<h2 class="text-success mb-4">Dashboard</h2>
+
+{% if profile.role == 'farmer' %}
+<a href="{% url 'create_produce' %}" class="btn btn-success mb-3"
+  >+ Add Produce</a
+>
+
+<div class="row">
+  {% for item in produce %}
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">{{ item.name }}</h5>
+        <p>Quantity: {{ item.quantity_kg }} kg</p>
+        <p>Pickup: {{ item.pickup_location }}</p>
+        <form
+          method="post"
+          action="{% url 'delete_produce' item.id %}"
+          class="mt-2"
+        >
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %} {% if profile.role == 'driver' %}
+<a href="{% url 'create_transport' %}" class="btn btn-success mb-3"
+  >+ Create Transport</a
+>
+{% endif %}
+
+<h4 class="mt-5 mb-3 text-primary">Available Transport Routes</h4>
+<div class="row">
+  {% for t in transport %}
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-body">
+        <p><strong>From:</strong> {{ t.route_start_address }}</p>
+        <p><strong>To:</strong> {{ t.route_end_address }}</p>
+        <p><strong>Capacity:</strong> {{ t.capacity_total }} kg</p>
+        <p><strong>Scheduled:</strong> {{ t.scheduled_date }}</p>
+
+        {% if profile.role == 'driver' %}
+        <form
+          method="post"
+          action="{% url 'delete_transport' t.id %}"
+          class="mt-2"
+        >
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}
