@@ -4,8 +4,8 @@ from django.contrib.auth.decorators import login_required
 from .forms import UserRegisterForm, ProduceForm
 from .models import UserProfile, Produce, Transport
 from django.http import HttpResponseForbidden
+import requests
 # Create your views here.
-
 
 def register(request):
     if request.method == 'POST':
@@ -46,15 +46,32 @@ def dashboard(request):
 @login_required
 def create_produce(request):
     if request.method == 'POST':
-        form = ProduceForm(request.POST)
-        if form.is_valid():
-            produce = form.save(commit=False)
-            produce.owner = request.user
-            produce.save()
-            return redirect('dashboard')
+        lat = request.POST.get('pickup_lat')
+        lng = request.POST.get('pickup_lng')
+        if lat and lng:
+            # Reverse geocode to get the address string
+            try:
+                response = requests.get(
+                    f'https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lng}&format=json',
+                    headers={'User-Agent': 'AgriPoolApp'}
+                )
+                address = response.json().get('display_name', f"{lat}, {lng}")
+            except:
+                address = f"{lat}, {lng}"
+
+            form = ProduceForm(request.POST)
+            if form.is_valid():
+                produce = form.save(commit=False)
+                produce.owner = request.user
+                produce.pickup_location = address
+                produce.save()
+                return redirect('dashboard')
+        else:
+            return render(request, 'core/create_produce.html', {'form': ProduceForm(), 'error': 'Please select a pickup location.'})
     else:
         form = ProduceForm()
     return render(request, 'core/create_produce.html', {'form': form})
+
 
 
 @login_required

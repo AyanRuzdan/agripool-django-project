@@ -5,8 +5,68 @@
     <h4 class="text-success">Add Produce</h4>
     <form method="POST">
       {% csrf_token %} {{ form.as_p }}
+
+      <div id="map" style="height: 400px" class="mb-3"></div>
+      <p>
+        <strong>Pickup Location:</strong>
+        <span id="pickup-location">Click on the map</span>
+      </p>
+
+      <input type="hidden" name="pickup_lat" id="pickup_lat" />
+      <input type="hidden" name="pickup_lng" id="pickup_lng" />
+
       <button type="submit" class="btn btn-success">Submit</button>
     </form>
   </div>
 </div>
+
+<!-- Map Scripts -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+  const map = L.map("map").setView([26.85, 80.95], 6);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap contributors",
+  }).addTo(map);
+
+  let pickupMarker;
+
+  const updateLocationName = (lat, lng) => {
+    fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        document.getElementById("pickup-location").textContent =
+          data.display_name || `${lat}, ${lng}`;
+      })
+      .catch((err) => {
+        document.getElementById("pickup-location").textContent =
+          "Unknown location";
+      });
+  };
+
+  map.on("click", function (e) {
+    if (!pickupMarker) {
+      pickupMarker = L.marker(e.latlng, { draggable: true })
+        .addTo(map)
+        .bindPopup("Pickup Point")
+        .openPopup();
+    } else {
+      pickupMarker.setLatLng(e.latlng).openPopup();
+    }
+    document.getElementById("pickup_lat").value = e.latlng.lat;
+    document.getElementById("pickup_lng").value = e.latlng.lng;
+    updateLocationName(e.latlng.lat, e.latlng.lng);
+
+    pickupMarker.on("dragend", function (e) {
+      const pos = e.target.getLatLng();
+      document.getElementById("pickup_lat").value = pos.lat;
+      document.getElementById("pickup_lng").value = pos.lng;
+      updateLocationName(pos.lat, pos.lng);
+    });
+  });
+</script>
+
 {% endblock %}
