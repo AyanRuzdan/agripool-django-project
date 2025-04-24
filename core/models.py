@@ -20,8 +20,8 @@ class UserProfile(models.Model):
 
 class Produce(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    name = models.CharField(max_length=100)
-    quantity_kg = models.FloatField()
+    item_name = models.CharField(max_length=100)
+    item_weight = models.FloatField()
     pickup_location = models.CharField(max_length=200)
     created_at = models.DateTimeField(auto_now_add=True)
 

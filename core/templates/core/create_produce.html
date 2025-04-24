@@ -14,6 +14,7 @@
 
       <input type="hidden" name="pickup_lat" id="pickup_lat" />
       <input type="hidden" name="pickup_lng" id="pickup_lng" />
+      <input type="hidden" name="pickup_location_name" id="pickup_location_name" />
 
       <button type="submit" class="btn btn-success">Submit</button>
     </form>
@@ -38,8 +39,9 @@
     )
       .then((res) => res.json())
       .then((data) => {
-        document.getElementById("pickup-location").textContent =
-          data.display_name || `${lat}, ${lng}`;
+        const locationName = data.display_name || `${lat}, ${lng}`;
+        document.getElementById("pickup-location").textContent = locationName;
+        document.getElementById("pickup_location_name").value = locationName;
       })
       .catch((err) => {
         document.getElementById("pickup-location").textContent =

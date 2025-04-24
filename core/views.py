@@ -1,10 +1,16 @@
+from django.contrib import messages
 from django.shortcuts import redirect, render, get_object_or_404
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from .forms import UserRegisterForm, ProduceForm
 from .models import UserProfile, Produce, Transport
 from django.http import HttpResponseForbidden
 import requests
+
+
+def logout_view(request):
+    logout(request)
+    return redirect('home')
 
 
 def home(request):
@@ -53,28 +59,34 @@ def create_produce(request):
     if request.method == 'POST':
         lat = request.POST.get('pickup_lat')
         lng = request.POST.get('pickup_lng')
-        if lat and lng:
-            # Reverse geocode to get the address string
+        form = ProduceForm(request.POST)
+
+        if not lat or not lng:
+            messages.error(
+                request, "Please select a pickup location on the map.")
+            return render(request, 'core/create_produce.html', {'form': form})
+
+        if form.is_valid():
             try:
                 response = requests.get(
                     f'https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lng}&format=json',
                     headers={'User-Agent': 'AgriPoolApp'}
                 )
                 address = response.json().get('display_name', f"{lat}, {lng}")
-            except:
+            except Exception as e:
                 address = f"{lat}, {lng}"
+                messages.warning(
+                    request, "Could not fetch location name. Coordinates will be saved instead.")
 
-            form = ProduceForm(request.POST)
-            if form.is_valid():
-                produce = form.save(commit=False)
-                produce.owner = request.user
-                produce.pickup_location = address
-                produce.save()
-                return redirect('dashboard')
-        else:
-            return render(request, 'core/create_produce.html', {'form': ProduceForm(), 'error': 'Please select a pickup location.'})
+            produce = form.save(commit=False)
+            produce.owner = request.user
+            produce.pickup_location = address
+            produce.save()
+            messages.success(request, "Produce added successfully.")
+            return redirect('dashboard')
     else:
         form = ProduceForm()
+
     return render(request, 'core/create_produce.html', {'form': form})
 
 
