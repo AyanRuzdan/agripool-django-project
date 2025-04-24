@@ -1,0 +1,65 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container py-5">
+  <!-- Hero Section -->
+  <div class="card shadow-sm mb-5 border-0">
+    <div class="row g-0 align-items-center">
+      <div class="col-md-6 p-5">
+        <h1 class="display-5 fw-bold">
+          Efficient Transport Sharing for Agricultural Produce
+        </h1>
+        <p class="lead text-muted">
+          Connect with local farmers and transporters to optimize your produce
+          delivery to markets. Save time, reduce costs, and maximize efficiency.
+        </p>
+        <a href="{% url 'register' %}" class="btn btn-success btn-lg mt-3"
+          >Get Started</a
+        >
+      </div>
+      <div class="col-md-6">
+        <img
+          src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&q=80"
+          class="img-fluid rounded-end"
+          alt="Farmer with produce"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Features Section -->
+  <div class="row text-center g-4">
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <i data-lucide="calendar" class="me-2"></i>
+          <h5 class="card-title mt-3">Schedule Transport</h5>
+          <p class="card-text text-muted">
+            Plan and schedule your produce transport with our calendar system.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <i data-lucide="users" class="me-2"></i>
+          <h5 class="card-title mt-3">Connect with Farmers</h5>
+          <p class="card-text text-muted">
+            Share transport costs and resources with nearby farmers.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <i data-lucide="chart-column" class="me-2"></i>
+          <h5 class="card-title mt-3">Track Analytics</h5>
+          <p class="card-text text-muted">
+            Monitor your delivery efficiency and optimize routes.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

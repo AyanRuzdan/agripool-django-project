@@ -7,6 +7,9 @@ from django.http import HttpResponseForbidden
 import requests
 # Create your views here.
 
+def home(request):
+    return render(request, 'core/home.html')
+
 def register(request):
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)
