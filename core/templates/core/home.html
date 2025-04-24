@@ -1,6 +1,5 @@
 {% extends 'base.html' %} {% block content %}
 <div class="container py-5">
-  <!-- Hero Section -->
   <div class="card shadow-sm mb-5 border-0">
     <div class="row g-0 align-items-center">
       <div class="col-md-6 p-5">
@@ -11,9 +10,27 @@
           Connect with local farmers and transporters to optimize your produce
           delivery to markets. Save time, reduce costs, and maximize efficiency.
         </p>
+        {% if user.is_authenticated %} {% if profile.role == 'farmer' %}
+        <a href="{% url 'create_produce' %}" class="btn btn-success btn-lg mt-3"
+          >Create Produce</a
+        >
+        <a href="{% url 'dashboard' %}" class="btn btn-success btn-lg mt-3"
+          >Dashboard</a
+        >
+        {% elif profile.role == 'driver' %}
+        <a
+          href="{% url 'create_transport' %}"
+          class="btn btn-success btn-lg mt-3"
+          >Create Transport</a
+        >
+        <a href="{% url 'dashboard' %}" class="btn btn-success btn-lg mt-3"
+          >Dashboard</a
+        >
+        {% endif %} {% else %}
         <a href="{% url 'register' %}" class="btn btn-success btn-lg mt-3"
           >Get Started</a
         >
+        {% endif %}
       </div>
       <div class="col-md-6">
         <img

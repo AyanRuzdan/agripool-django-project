@@ -5,10 +5,12 @@ from .forms import UserRegisterForm, ProduceForm
 from .models import UserProfile, Produce, Transport
 from django.http import HttpResponseForbidden
 import requests
-# Create your views here.
+
 
 def home(request):
-    return render(request, 'core/home.html')
+    profile = request.user.userprofile if request.user.is_authenticated else None
+    return render(request, 'core/home.html', {'profile': profile})
+
 
 def register(request):
     if request.method == 'POST':
@@ -76,7 +78,6 @@ def create_produce(request):
     return render(request, 'core/create_produce.html', {'form': form})
 
 
-
 @login_required
 def create_transport(request):
     if request.method == 'POST':
@@ -119,6 +120,7 @@ def delete_transport(request, transport_id):
 
     return HttpResponseForbidden("Invalid request method.")
 
+
 @login_required
 def delete_produce(request, id):
     produce = get_object_or_404(Produce, id=id, owner=request.user)
@@ -126,4 +128,3 @@ def delete_produce(request, id):
         produce.delete()
         return redirect('dashboard')
     return HttpResponseForbidden()
-

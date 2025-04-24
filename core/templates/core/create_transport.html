@@ -58,7 +58,6 @@
   <button type="submit" class="btn btn-success">Save Transport</button>
 </form>
 
-<!-- Leaflet + ORS styling/scripts -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
@@ -89,7 +88,7 @@
     if (routeLine) {
       map.removeLayer(routeLine);
     }
-    const apiKey = "YOUR_OPENROUTESERVICE_API_KEY"; // Replace this with your ORS API key
+    const apiKey = "5b3ce3597851110001cf624812b637eb2a5f45209577daeba8b821af";
     axios
       .post(
         "https://api.openrouteservice.org/v2/directions/driving-car/geojson",
@@ -148,8 +147,6 @@
         updateLocationName(pos.lat, pos.lng, "end-location");
         if (startMarker && endMarker) drawRoute(startMarker.getLatLng(), pos);
       });
-
-      // Draw route when both points are selected
       drawRoute(startMarker.getLatLng(), endMarker.getLatLng());
     }
   });
