@@ -29,7 +29,6 @@ def register(request):
                 user=user, role=form.cleaned_data['role'])
             login(request, user)
             return redirect('dashboard')
-
     else:
         form = UserRegisterForm()
     return render(request, 'core/register.html', {'form': form})
